@@ -40,7 +40,7 @@ doInit(){
             fi
             if [ -z "${BRIDGE}" ]; then
                 echo 'What is your bridge IP address?'
-                read BRIDGE
+                read -r BRIDGE
             else
                 echo "  Hue bridge found on address ${BRIDGE}"
                 CHOICE="y"
