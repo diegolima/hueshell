@@ -1,6 +1,7 @@
 #!/bin/bash
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
+TOPPID=$$
 
 . libhueshell
 
@@ -11,7 +12,7 @@ doInit(){
         mkdir -p "${APPDIR}" || \
             ( echo "Could not initialize ${APPDIR}" && \
               echo "Please check that you have permission to create that directory" && \
-              exit 1 )
+              kill $TOPPID )
     fi
     
     if [ -f "${APPDIR}"/config ]; then
@@ -68,18 +69,29 @@ doInit(){
         hueCreateUser "${BRIDGE}" || \
             ( echo "There was a problem communicating with the bridge." && \
               echo "The error was: ${RETURN}" && \
-              exit 1 )
+              kill $TOPPID )
         
         BRIDGETOKEN=$(echo "${RETURN}"|cut -f6 -d\")
 
+        echo "Validating bridge communication..."
+        hueGetConfig "${BRIDGE}" "${BRIDGETOKEN}" || \
+            ( echo "Could not validate communication parameters." && \
+              echo "The error was: ${RETURN}" && \
+              kill $TOPPID )
+
+        echo "All set! Writing configuration files"
         echo "BRIDGE=${BRIDGE}"           >  "${APPDIR}"/config
         echo "BRIDGETOKEN=${BRIDGETOKEN}" >> "${APPDIR}"/config
+       
+        echo ""
+        echo "You may now start using hueshell to communicate with your brige."
+        echo "For starters, you may want to list available lights using:"
+        echo "$ hue list lights"
     fi
-    
 }
 
-case "$1" in
+case "${1}" in
     "init") doInit;;
-    "list") doListDevices;;
+    "list") doListDevices "${2}";;
     *) showhelp;;
 esac

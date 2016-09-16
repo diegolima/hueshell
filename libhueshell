@@ -72,3 +72,43 @@ hueCreateUser(){
         return 3
     fi
 }
+
+###############################################################################
+# Retrieves the Hue bridge configuration parameters
+# Globals:
+#   - RETURN
+# Arguments:
+#   - Mandatory: Bridge Address (IP)
+#   - Mandatory: Bridg username (Access Token)
+# Returns:
+#   - Success: JSON containing the current bridge configuration
+#
+#   - Error:   JSON containing error message
+#              [{"error":{"type":101,"address":"","description":"link button not pressed"}}]
+# Exit Codes:
+#   - 0: success
+#   - 1: error - mandatory argument not provided
+#   - 2: error - bridge communication problem
+#   - 3: error - unexpected reply
+###############################################################################
+hueGetConfig(){
+    local BRIDGE
+    local TOKEN
+    local ENDPOINT
+    local OUTPUT
+    RETURN=""
+    BRIDGE="${1}"
+    TOKEN="${2}"
+
+    if [[ ( -z "${BRIDGE}" ) || ( -z "${TOKEN}" ) ]]; then return 1; fi
+
+    ENDPOINT="http://${BRIDGE}/api/${TOKEN}/config"
+    OUTPUT=$(curl -s "${ENDPOINT}")
+    if [[ "${OUTPUT}" =~ "zigbeechannel" ]]; then
+        export RETURN="${OUTPUT}"
+        return 0
+    else 
+        export RETURN="${OUTPUT}"
+        return 2
+    fi
+}
