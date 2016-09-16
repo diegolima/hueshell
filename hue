@@ -2,22 +2,7 @@
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
 
-valid_ip() {
-    local  IP=$1
-    local  STAT=1
-    if [ -z "${IP}" ]; then return 1; fi
-
-    if [[ "$IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        OIFS=$IFS
-        IFS='.'
-        IP=($IP)
-        IFS=$OIFS
-        [[ ${IP[0]} -le 255 && ${IP[1]} -le 255 \
-            && ${IP[2]} -le 255 && ${IP[3]} -le 255 ]]
-        STAT=$?
-    fi
-    return $STAT
-}
+. libhueshell
 
 # Initialize settings.
 doInit(){
@@ -33,6 +18,7 @@ doInit(){
         echo "A configuration file already exists. Do you want to reset your settings?"
         echo "Please note that if you do this you'll need to re-authorize the application."
         read -r CHOICE
+        echo ""
     else
         CHOICE="y"
     fi
@@ -40,6 +26,7 @@ doInit(){
     if [[ ( "${CHOICE}" == "y" ) || ( "${CHOICE}" == "yes" ) ]]; then
         unset CHOICE
         local BRIDGE
+        local BRIDGETOKEN
         local SUBNET
         local SUBNETS
         local -l SKIP
@@ -58,6 +45,7 @@ doInit(){
             if [ -z "${BRIDGE}" ]; then
                 echo 'What is your bridge IP address?'
                 read -r BRIDGE
+                echo ""
             else
                 echo "Hue bridge found on address ${BRIDGE}"
             fi
@@ -71,8 +59,21 @@ doInit(){
                 SKIP="y"
             fi
         done
+        echo ""
+        echo "We're going to try to communicate with the bridge."
+        echo "Please press the central button on it and press enter to continue."
+        read CHOICE
+        echo ""
 
-        echo "BRIDGE=${BRIDGE}" > "${APPDIR}"/config
+        hueCreateUser "${BRIDGE}" || \
+            ( echo "There was a problem communicating with the bridge." && \
+              echo "The error was: ${RETURN}" && \
+              exit 1 )
+        
+        BRIDGETOKEN=$(echo "${RETURN}"|cut -f6 -d\")
+
+        echo "BRIDGE=${BRIDGE}"           >  "${APPDIR}"/config
+        echo "BRIDGETOKEN=${BRIDGETOKEN}" >> "${APPDIR}"/config
     fi
     
 }

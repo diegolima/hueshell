@@ -1,0 +1,74 @@
+#!/bin/bash
+# This file is intended to be sourced, not executed!
+
+
+###############################################################################
+# TODO: Write proper documentation
+###############################################################################
+valid_ip() {
+    local  IP=$1
+    local  STAT=1
+    if [ -z "${IP}" ]; then return 1; fi
+
+    if [[ "$IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        IP=($IP)
+        IFS=$OIFS
+        [[ ${IP[0]} -le 255 && ${IP[1]} -le 255 \
+            && ${IP[2]} -le 255 && ${IP[3]} -le 255 ]]
+        STAT=$?
+    fi
+    return $STAT
+}
+
+###############################################################################
+# Creates a new user on the Hue bridge 
+# Globals:
+#   - RETURN
+# Arguments:
+#   - Mandatory: Bridge Address (IP)
+#   - Optional: Application Name
+# Returns:
+#   - Success: JSON containing a username (access token):
+#              [{"success":{"username": "83b7780291a6ceffbe0bd049104df"}}]
+#
+#   - Error:   JSON containing error message
+#              [{"error":{"type":101,"address":"","description":"link button not pressed"}}]
+# Exit Codes:
+#   - 0: success
+#   - 1: error - mandatory argument not provided
+#   - 2: error - bridge communication problem
+#   - 3: error - unexpected reply
+###############################################################################
+hueCreateUser(){
+    local BRIDGE
+    local APPNAME
+    local ENDPOINT
+    local OUTPUT
+    RETURN=""
+    BRIDGE="${1}"
+
+    if [ -z "${1}" ]; then return 1; fi
+
+    if [ ! -z "${2}" ]; then
+        APPNAME="${2}"
+    else
+        APPNAME="hueshell"
+    fi
+
+    ENDPOINT="http://${BRIDGE}/api"
+
+    OUTPUT=$(curl -s --data "{\"devicetype\": \"${APPNAME}#hueshell\"}" "${ENDPOINT}")
+    if [[ "${OUTPUT}" =~ "error" ]]; then
+        RETURN="${OUTPUT}"
+        return 2
+    elif [[ "${OUTPUT}" =~ "success" ]]; then
+        RETURN="${OUTPUT}"
+        return 0
+    else
+        echo "hueCreateUser() - Something unexpected happened!"
+        echo "Output: ${OUTPUT}"
+        return 3
+    fi
+}
