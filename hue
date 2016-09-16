@@ -30,8 +30,8 @@ doInit(){
             if ! [ -z "${NMAP}" ]; then
                 echo "Trying to auto-discover Philips Hue Bridges on your network..."
 
-                # FIXME: only scan /24 networks due to the time nmap needs to scan large ones
-                SUBNETS=$(ip route show|awk '{print $1}'|grep -v default|grep '/24')
+                # FIXME: only scan only up to /24 networks due to the time nmap needs to scan large ones
+                SUBNETS=$(ip route show|awk '{print $1}'|grep -v default|egrep '/(2[4-9]|3[0-2])')
                 for SUBNET in ${SUBNETS}; do
                     echo "  Scanning ${SUBNET}"
                     ${NMAP} -sP "${SUBNET}" > /dev/null
