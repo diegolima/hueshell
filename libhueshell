@@ -61,10 +61,10 @@ hueCreateUser(){
 
     OUTPUT=$(curl -s --data "{\"devicetype\": \"${APPNAME}#hueshell\"}" "${ENDPOINT}")
     if [[ "${OUTPUT}" =~ "error" ]]; then
-        RETURN="${OUTPUT}"
+        export RETURN="${OUTPUT}"
         return 2
     elif [[ "${OUTPUT}" =~ "success" ]]; then
-        RETURN="${OUTPUT}"
+        export RETURN="${OUTPUT}"
         return 0
     else
         echo "hueCreateUser() - Something unexpected happened!"
