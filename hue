@@ -62,7 +62,7 @@ doInit(){
         echo ""
         echo "We're going to try to communicate with the bridge."
         echo "Please press the central button on it and press enter to continue."
-        read CHOICE
+        read -r CHOICE
         echo ""
 
         hueCreateUser "${BRIDGE}" || \
