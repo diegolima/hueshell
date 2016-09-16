@@ -1,0 +1,49 @@
+#!/bin/bash
+APPDIR="${HOME}/.hueshell"
+NMAP=`which nmap`
+
+
+# Initialize settings.
+doInit(){
+    if ! [ -d "${APPDIR}" ]; then
+        mkdir -p "${APPDIR}" || \
+            ( echo "Could not initialize ${APPDIR}" && \
+              echo "Please check that you have permission to create that directory" && \
+              exit 1 )
+    fi
+    
+    if [ -f "${APPDIR}"/config ]; then
+        echo "A configuration file already exists. Do you want to reset your settings?"
+        echo "Please note that if you do this you'll need to re-authorize the application."
+        read -l CHOICE
+    else
+        CHOICE="y"
+    fi
+
+    if [[ ( "${CHOICE}" == "y" ) || ( "${CHOICE}" == "yes" ) ]]; then
+        unset CHOICE
+        declare -l BRIDGE
+        while [[ ( "${CHOICE}" != "y" ) || ( ${CHOICE} != "yes") ]]; do
+            if ! [ -z "${NMAP}" ]; then
+                echo "Trying to auto-discover Philips Hue Bridges on your network..."
+                declare -l SUBNET
+                declare -l SUBNETS=`ip route show|awk '{print $1}'|grep -v default`
+                for SUBNET in ${SUBNETS}; do
+                    ${NMAP} -sP "${SUBNET}" > /dev/null
+                done
+                BRIDGE=`arp -an|grep '00:17:88'|awk '{match($0,/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); ip = substr($0,RSTART,RLENGTH); print ip}'`
+            fi
+            if [ -z "${BRIDGE}" ]; then
+                echo 'What is your bridge IP address?'
+            else
+                echo "Hue bridge found on address ${BRIDGE}"
+            fi
+        done
+    fi
+}
+
+case "$1" in
+    "init") doInit;;
+    "list") doListDevices;;
+    *) showhelp;;
+esac
