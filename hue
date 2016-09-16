@@ -62,7 +62,7 @@ doInit(){
                 echo "Hue bridge found on address ${BRIDGE}"
             fi
 
-            if $(valid_ip "${BRIDGE}"); then
+            if valid_ip "${BRIDGE}"; then
                 CHOICE="y"
             else
                 echo "${BRIDGE} doesn't seem to be a valid IP Address."
