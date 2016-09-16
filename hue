@@ -2,10 +2,26 @@
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
 
+valid_ip() {
+    local  IP=$1
+    local  STAT=1
+    if [ -z "${IP}" ]; then return 1; fi
+
+    if [[ "$IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        IP=($IP)
+        IFS=$OIFS
+        [[ ${IP[0]} -le 255 && ${IP[1]} -le 255 \
+            && ${IP[2]} -le 255 && ${IP[3]} -le 255 ]]
+        STAT=$?
+    fi
+    return $STAT
+}
 
 # Initialize settings.
 doInit(){
-    declare -l CHOICE
+    local -l CHOICE
     if ! [ -d "${APPDIR}" ]; then
         mkdir -p "${APPDIR}" || \
             ( echo "Could not initialize ${APPDIR}" && \
@@ -23,17 +39,18 @@ doInit(){
 
     if [[ ( "${CHOICE}" == "y" ) || ( "${CHOICE}" == "yes" ) ]]; then
         unset CHOICE
-        declare -l BRIDGE
-        declare -l SUBNET
-        declare -l SUBNETS
+        local BRIDGE
+        local SUBNET
+        local SUBNETS
+        local -l SKIP
         while [[ ( "${CHOICE}" != "y" ) && ( ${CHOICE} != "yes") ]]; do
-            if ! [ -z "${NMAP}" ]; then
+            if [[ ( ! -z "${NMAP}" ) && ( ${SKIP} != "y" ) ]]; then
                 echo "Trying to auto-discover Philips Hue Bridges on your network..."
 
                 # FIXME: only scan only up to /24 networks due to the time nmap needs to scan large ones
                 SUBNETS=$(ip route show|awk '{print $1}'|grep -v default|egrep '/(2[4-9]|3[0-2])')
                 for SUBNET in ${SUBNETS}; do
-                    echo "  Scanning ${SUBNET}"
+                    echo "Scanning ${SUBNET}"
                     ${NMAP} -sP "${SUBNET}" > /dev/null
                 done
                 BRIDGE=$(arp -an|grep '00:17:88'|awk '{match($0,/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); ip = substr($0,RSTART,RLENGTH); print ip}')
@@ -42,11 +59,22 @@ doInit(){
                 echo 'What is your bridge IP address?'
                 read -r BRIDGE
             else
-                echo "  Hue bridge found on address ${BRIDGE}"
+                echo "Hue bridge found on address ${BRIDGE}"
+            fi
+
+            if $(valid_ip "${BRIDGE}"); then
                 CHOICE="y"
+            else
+                echo "${BRIDGE} doesn't seem to be a valid IP Address."
+                echo "Please enter a valid Hue bridge address."
+                unset BRIDGE
+                SKIP="y"
             fi
         done
+
+        echo "BRIDGE=${BRIDGE}" > "${APPDIR}"/config
     fi
+    
 }
 
 case "$1" in
