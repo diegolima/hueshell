@@ -5,6 +5,7 @@ NMAP=$(which nmap)
 
 # Initialize settings.
 doInit(){
+    declare -l CHOICE
     if ! [ -d "${APPDIR}" ]; then
         mkdir -p "${APPDIR}" || \
             ( echo "Could not initialize ${APPDIR}" && \
@@ -15,7 +16,7 @@ doInit(){
     if [ -f "${APPDIR}"/config ]; then
         echo "A configuration file already exists. Do you want to reset your settings?"
         echo "Please note that if you do this you'll need to re-authorize the application."
-        read -r -l CHOICE
+        read -r CHOICE
     else
         CHOICE="y"
     fi
@@ -25,19 +26,24 @@ doInit(){
         declare -l BRIDGE
         declare -l SUBNET
         declare -l SUBNETS
-        while [[ ( "${CHOICE}" != "y" ) || ( ${CHOICE} != "yes") ]]; do
+        while [[ ( "${CHOICE}" != "y" ) && ( ${CHOICE} != "yes") ]]; do
             if ! [ -z "${NMAP}" ]; then
                 echo "Trying to auto-discover Philips Hue Bridges on your network..."
-                SUBNETS=$(ip route show|awk '{print $1}'|grep -v default)
+
+                # FIXME: only scan /24 networks due to the time nmap needs to scan large ones
+                SUBNETS=$(ip route show|awk '{print $1}'|grep -v default|grep '/24')
                 for SUBNET in ${SUBNETS}; do
+                    echo "  Scanning ${SUBNET}"
                     ${NMAP} -sP "${SUBNET}" > /dev/null
                 done
                 BRIDGE=$(arp -an|grep '00:17:88'|awk '{match($0,/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); ip = substr($0,RSTART,RLENGTH); print ip}')
             fi
             if [ -z "${BRIDGE}" ]; then
                 echo 'What is your bridge IP address?'
+                read BRIDGE
             else
-                echo "Hue bridge found on address ${BRIDGE}"
+                echo "  Hue bridge found on address ${BRIDGE}"
+                CHOICE="y"
             fi
         done
     fi
