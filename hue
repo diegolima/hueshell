@@ -4,10 +4,10 @@ NMAP=$(which nmap)
 JQ=$(which jq)
 TOPPID=$$
 
-if [ -f ${0}/libhueshell ]; then
-    source ${0}/libhueshell
+if [ -f "${0}"/libhueshell ]; then
+    . "${0}"/libhueshell
 elif [ -f libhueshell ]; then
-    source libhueshell
+    . libhueshell
 else
     echo "Could not find libhueshell"
     kill $TOPPID
@@ -26,8 +26,8 @@ doInit(){
     fi
     if [ -z "${JQ}" ]; then
         echo "JQ is a dependency and is missing. I'll try to install it for you."
-        wget 'http://stedolan.github.io/jq/download/linux64/jq' -O ${APPDIR}/jq
-        chmod +x ${APPDIR}/jq
+        wget 'http://stedolan.github.io/jq/download/linux64/jq' -O "${APPDIR}"/jq
+        chmod +x "${APPDIR}"/jq
     fi
    
     if [ -f "${APPDIR}"/config ]; then
