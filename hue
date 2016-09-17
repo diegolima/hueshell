@@ -5,7 +5,7 @@ JQ=$(which jq)
 TOPPID=$$
 
 if [ -f "${0}"/libhueshell ]; then
-    # shellcheck source=./libhueshell
+# shellcheck source=./libhueshell
     . "${0}"/libhueshell
 elif [ -f libhueshell ]; then
     . libhueshell
