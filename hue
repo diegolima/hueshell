@@ -1,20 +1,35 @@
 #!/bin/bash
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
+JQ=$(which jq)
 TOPPID=$$
 
-. libhueshell
+if [ -f ${0}/libhueshell ]; then
+    source ${0}/libhueshell
+elif [ -f libhueshell ]; then
+    source libhueshell
+else
+    echo "Could not find libhueshell"
+    kill $TOPPID
+fi
+if [[ ( -z "${JQ}" ) && ( -x "${APPDIR}"/jq ) ]]; then JQ="${APPDIR}"/jq; fi
 
 # Initialize settings.
 doInit(){
     local -l CHOICE
+
     if ! [ -d "${APPDIR}" ]; then
         mkdir -p "${APPDIR}" || \
             ( echo "Could not initialize ${APPDIR}" && \
               echo "Please check that you have permission to create that directory" && \
               kill $TOPPID )
     fi
-    
+    if [ -z "${JQ}" ]; then
+        echo "JQ is a dependency and is missing. I'll try to install it for you."
+        wget 'http://stedolan.github.io/jq/download/linux64/jq' -O ${APPDIR}/jq
+        chmod +x ${APPDIR}/jq
+    fi
+   
     if [ -f "${APPDIR}"/config ]; then
         echo "A configuration file already exists. Do you want to reset your settings?"
         echo "Please note that if you do this you'll need to re-authorize the application."
