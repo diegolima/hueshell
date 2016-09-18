@@ -94,7 +94,6 @@ hueCreateUser(){
 #   - 0: success
 #   - 1: error - mandatory argument not provided
 #   - 2: error - bridge communication problem
-#   - 3: error - unexpected reply
 ###############################################################################
 hueGetConfig(){
     local bridge
@@ -166,4 +165,5 @@ hueLoadLights(){
         eval LIGHT["${LIGHT_IDS[$i]}.brightness"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.brightness")
     done
 
+    return 0
 }
