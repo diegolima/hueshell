@@ -142,7 +142,7 @@ hueGetConfig(){
 #   - 2: error - bridge communication problem
 #   - 3: error - unexpected reply
 ###############################################################################
-#shellcheck ignore=2046
+#shellcheck disable=2046
 hueLoadLights(){
     local bridge
     local token
