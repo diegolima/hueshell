@@ -133,22 +133,22 @@ doInit(){
     fi
 }
 
-doListDevices(){
+doLightAction(){
     local i
     local color
+    local action
     local nocolor
-    local devicetype
 
-    devicetype="${1}"
+    action="${1}"
     nocolor="\e[0m"
 
-    case "${devicetype}" in
+    case "${action}" in
         "")
-            echo "You must specify a device type!"
-            echo "Valid types are:"
-            echo "  - lights"
+            echo "You must specify an action!"
+            echo "Valid actions are:"
+            echo "  - list"
             ;;
-        "lights")
+        list|ls)
             hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
             echo "${#LIGHT_IDS[*]} lights have been detected."
             for((i=0;i<${#LIGHT_IDS[*]};i++)); do
@@ -163,7 +163,7 @@ doListDevices(){
             done
             ;;
         *)
-            echo "Unimplemented device type :("
+            echo "Unimplemented action :("
             ;;
     esac
 
@@ -171,6 +171,9 @@ doListDevices(){
 
 case "${1}" in
     "init") doInit;;
+    light|lights)
+        doLightAction "${2}" "${3}" "${4}" 
+        ;;
     "list") doListDevices "${2}";;
     *) showhelp;;
 esac
