@@ -16,6 +16,8 @@ declare -a LIGHTGROUP_IDS
 
 export LIGHT
 export LIGHT_IDS
+export LIGHTGROUP
+export LIGHTGROUP_IDS
 
 
 ###############################################################################
