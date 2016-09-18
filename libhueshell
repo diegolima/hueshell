@@ -78,7 +78,7 @@ hueCreateUser(){
 
     endpoint="http://${bridge}/api"
 
-    output=$(curl -s --data "{\"devicetype\": \"${appname}#hueshell\"}" "${endpoint}")
+    output=$(curl -s --data "{\"devicetype\": \"${appname}#${HOSTNAME}\"}" "${endpoint}")
     if [[ "${output}" =~ "error" ]]; then
         export RETURN="${output}"
         return 2
@@ -154,7 +154,7 @@ hueGetConfig(){
 #       * LIGHT[number.state.alert] - The alert effect, which is a temporary change to the bulb’s state.
 #       * LIGHT[number.state-reachable] - Indicates if a light can be reached by the bridge.
 #       * LIGHT[number.state-colormode] - Indicates the color mode in which the light is working
-
+#
 # Arguments:
 #   - Mandatory: Bridge Address (ip)
 #   - Mandatory: Bridg username (Access Token)
@@ -171,7 +171,7 @@ hueLoadLights(){
     local token
     local endpoint
     local output
-    local LIGHT_NUMBER
+    local light_number
     bridge="${1}"
     token="${2}"
 
@@ -183,8 +183,8 @@ hueLoadLights(){
         return 2
     LIGHT_IDS=($(echo "${output}"|${JQ} keys|cut -f2 -d\"|egrep -v '\[|\]'))
 
-    LIGHT_NUMBER="${#LIGHT_IDS[*]}"
-    for((i=0;i<LIGHT_NUMBER;i++)); do
+    light_number="${#LIGHT_IDS[*]}"
+    for((i=0;i<light_number;i++)); do
         # Light Details
         eval LIGHT["${LIGHT_IDS[$i]}.type"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].type")
         eval LIGHT["${LIGHT_IDS[$i]}.name"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].name")
