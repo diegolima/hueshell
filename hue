@@ -135,9 +135,12 @@ doInit(){
 
 doListDevices(){
     local i
+    local color
+    local nocolor
     local devicetype
 
     devicetype="${1}"
+    nocolor="\e[0m"
 
     case "${devicetype}" in
         "")
@@ -149,7 +152,14 @@ doListDevices(){
             hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
             echo "${#LIGHT_IDS[*]} lights have been detected."
             for((i=0;i<${#LIGHT_IDS[*]};i++)); do
-                echo "  - Light ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})"
+                if [ "${LIGHT[${LIGHT_IDS[$i]}.reachable]}" == "false" ]; then
+                    color="\e[90m" # Dark Grey
+                elif [ "${LIGHT[${LIGHT_IDS[$i]}.online]}" == "true" ]; then
+                    color="\e[32m" # Green
+                elif [ "${LIGHT[${LIGHT_IDS[$i]}.online]}" == "false" ]; then
+                    color="\e[31m" # Red
+                fi
+                echo -e "${color}  - Light ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})${nocolor}"
             done
             ;;
         *)
