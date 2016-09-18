@@ -133,9 +133,13 @@ doLightAction(){
     local i
     local color
     local action
+    local target
+    local state
     local nocolor
 
     action="${1}"
+    target="${2}"
+    state="${3}"
     nocolor="\e[0m"
 
     case "${action}" in
@@ -158,10 +162,37 @@ doLightAction(){
                 echo -e "${color}  - Light ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})${nocolor}"
             done
             ;;
+        set)
+            hueSetLights "${target}" "${state}"
         *)
             echo "Unimplemented action :("
             ;;
     esac
+}
+doGroupAction(){
+    local i
+    local action
+
+    action="${1}"
+
+    case "${action}" in
+        "")
+            echo "You must specify an action!"
+            echo "Valid actions are:"
+            echo "  - list"
+            ;;
+        list|ls)
+            hueLoadGroups "${BRIDGE}" "${BRIDGETOKEN}"
+            echo "${#LIGHTGROUP_IDS[*]} groups have been detected."
+            for((i=0;i<${#LIGHTGROUP_IDS[*]};i++)); do
+                echo -e "  - Group ${LIGHTGROUP_IDS[$i]}: ${LIGHTGROUP[${LIGHTGROUP_IDS[$i]}.name]}"
+            done
+            ;;
+        *)
+            echo "Unimplemented action :("
+            ;;
+    esac
+
 }
 
 case "${1}" in
@@ -169,6 +200,11 @@ case "${1}" in
     light|lights)
         doLightAction "${2}" "${3}" "${4}" 
         ;;
-    "list") doListDevices "${2}";;
+    group)
+        doGroupAction "${2}" "${3}" "${4}"
+        ;;
+    room)
+        doRoomAction "${2}" "${3}" "${4}"
+        ;;
     *) showhelp;;
 esac

@@ -11,6 +11,8 @@
 ###############################################################################
 declare -A LIGHT
 declare -a LIGHT_IDS
+declare -A LIGHTGROUP
+declare -a LIGHTGROUP_IDS
 
 export LIGHT
 export LIGHT_IDS
@@ -154,6 +156,7 @@ hueGetConfig(){
 #       * LIGHT[number.state.alert] - The alert effect, which is a temporary change to the bulb’s state.
 #       * LIGHT[number.state-reachable] - Indicates if a light can be reached by the bridge.
 #       * LIGHT[number.state-colormode] - Indicates the color mode in which the light is working
+#   - LIGHT_IDS: Array containing the ID for each present light
 #
 # Arguments:
 #   - Mandatory: Bridge Address (ip)
@@ -207,5 +210,66 @@ hueLoadLights(){
         eval LIGHT["${LIGHT_IDS[$i]}.state.colormode"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.colormode")
     done
 
+    return 0
+}
+
+###############################################################################
+# Loads information about lights present in the Hue bridge
+#
+# Globals:
+#   - JQ
+#   - LIGHTGROUP: Associative array containing information about available lights
+#       * LIGHTGROUP[number.type] - Type of the Group.
+#       * LIGHTGROUP[number.name] - Human readable name of the group.
+#       * LIGHTGROUP[number.class] - Category of Room types.
+#       * LIGHTGROUP[number.lights] - The IDs of the lights that are in the group.
+#       * LIGHTGROUP[number.action] - The light state of one of the lamps in the group.
+#       
+#   - LIGHTGROUP_IDS: Array containing the ID for each present group
+# Arguments:
+#   - Mandatory: Bridge Address (ip)
+#   - Mandatory: Bridg username (Access Token)
+# Returns:
+# Exit Codes:
+#   - 0: success
+#   - 1: error - mandatory argument not provided
+#   - 2: error - bridge communication problem
+#   - 3: error - unexpected reply
+###############################################################################
+#shellcheck disable=2046
+hueLoadGroups(){
+    local bridge
+    local token
+    local endpoint
+    local output
+    local lightgroup_number
+    bridge="${1}"
+    token="${2}"
+
+    if [[ ( -z "${bridge}" ) || ( -z "${token}" ) ]]; then return 1; fi
+    
+    endpoint="http://${bridge}/api/${token}/groups"
+
+    output=$(curl -s "${endpoint}") || \
+        return 2
+
+    LIGHTGROUP_IDS=($(echo "${output}"|${JQ} keys|cut -f2 -d\"|egrep -v '\[|\]'))
+    lightgroup_number="${#LIGHTGROUP_IDS[*]}"
+    for((i=0;i<lightgroup_number;i++)); do
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.name"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].name")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.type"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].type")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.class"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].class")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.lights"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].lights")
+
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.on"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.on")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.xy"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.xy")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.ct"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.ct")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.bri"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.bri")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.hue"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.hue")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.sat"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.sat")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.alert"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.alert")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.effect"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.effect")
+        eval LIGHTGROUP["${LIGHTGROUP_IDS[$i]}.action.colormode"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHTGROUP_IDS[$i]}\"].action.colormode")
+    done
     return 0
 }
