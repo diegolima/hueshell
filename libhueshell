@@ -16,10 +16,10 @@ validIp() {
     if [ -z "${ip}" ]; then return 1; fi
 
     if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        OIFS=$IFS
+        oifs=$IFS
         IFS='.'
         ip=($ip)
-        IFS=$OIFS
+        IFS=$oifs
         [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
             && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
         stat=$?
@@ -142,6 +142,7 @@ hueGetConfig(){
 #   - 2: error - bridge communication problem
 #   - 3: error - unexpected reply
 ###############################################################################
+#shellcheck ignore=2046
 hueLoadLights(){
     local bridge
     local token
