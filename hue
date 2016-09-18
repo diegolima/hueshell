@@ -8,7 +8,7 @@
 #   - APPDIR: Application's home directory
 #   - NMAP: NMAP binary location
 #   - JQ: JQ binary location
-#   - TOPPID: PID of the parent shell process. Used to enable functions to
+#   - TOPPID: PID of the parent shell process. Used to enable subshells to
 #             abort the script execution.
 ###############################################################################
 declare APPDIR
