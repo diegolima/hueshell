@@ -1,11 +1,30 @@
 #!/bin/bash
+
+###############################################################################
+# Global Variables:
+#   - LIGHT: Assocative array containing information about each light
+#   - LIGHT_IDS: Array containing the IDs of detected lights
+#   - RETURN: String containing inter-function data
+#   - APPDIR: Application's home directory
+#   - NMAP: NMAP binary location
+#   - JQ: JQ binary location
+#   - TOPPID: PID of the parent shell process. Used to enable functions to
+#             abort the script execution.
+###############################################################################
+declare APPDIR
+declare TOPPID
+declare RETURN
+declare NMAP
+declare JQ
+declare -A LIGHT
+declare -a LIGHT_IDS
+
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
 JQ=$(which jq)
 TOPPID=$$
 
 if [ -f "${0}"/libhueshell ]; then
-# shellcheck source=./libhueshell
     . "${0}"/libhueshell
 elif [ -f libhueshell ]; then
     . libhueshell
@@ -14,10 +33,13 @@ else
     kill $TOPPID
 fi
 if [[ ( -z "${JQ}" ) && ( -x "${APPDIR}"/jq ) ]]; then JQ="${APPDIR}"/jq; fi
+if [ -f "${APPDIR}"/config ]; then
+    . "${APPDIR}"/config
+fi
 
 # Initialize settings.
 doInit(){
-    local -l CHOICE
+    local -l choice
 
     if ! [ -d "${APPDIR}" ]; then
         mkdir -p "${APPDIR}" || \
@@ -34,20 +56,20 @@ doInit(){
     if [ -f "${APPDIR}"/config ]; then
         echo "A configuration file already exists. Do you want to reset your settings?"
         echo "Please note that if you do this you'll need to re-authorize the application."
-        read -r CHOICE
+        read -r choice
         echo ""
     else
-        CHOICE="y"
+        choice="y"
     fi
 
-    if [[ ( "${CHOICE}" == "y" ) || ( "${CHOICE}" == "yes" ) ]]; then
-        unset CHOICE
-        local BRIDGE
-        local BRIDGETOKEN
+    if [[ ( "${choice}" == "y" ) || ( "${choice}" == "yes" ) ]]; then
+        unset choice
+        local bridge
+        local bridgetoken
         local SUBNET
         local SUBNETS
         local -l SKIP
-        while [[ ( "${CHOICE}" != "y" ) && ( ${CHOICE} != "yes") ]]; do
+        while [[ ( "${choice}" != "y" ) && ( ${choice} != "yes") ]]; do
             if [[ ( ! -z "${NMAP}" ) && ( ${SKIP} != "y" ) ]]; then
                 echo "Trying to auto-discover Philips Hue Bridges on your network..."
 
@@ -57,47 +79,47 @@ doInit(){
                     echo "Scanning ${SUBNET}"
                     ${NMAP} -sP "${SUBNET}" > /dev/null
                 done
-                BRIDGE=$(arp -an|grep '00:17:88'|awk '{match($0,/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); ip = substr($0,RSTART,RLENGTH); print ip}')
+                bridge=$(arp -an|grep '00:17:88'|awk '{match($0,/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); ip = substr($0,RSTART,RLENGTH); print ip}')
             fi
-            if [ -z "${BRIDGE}" ]; then
+            if [ -z "${bridge}" ]; then
                 echo 'What is your bridge IP address?'
-                read -r BRIDGE
+                read -r bridge
                 echo ""
             else
-                echo "Hue bridge found on address ${BRIDGE}"
+                echo "Hue bridge found on address ${bridge}"
             fi
 
-            if valid_ip "${BRIDGE}"; then
-                CHOICE="y"
+            if validIp "${bridge}"; then
+                choice="y"
             else
-                echo "${BRIDGE} doesn't seem to be a valid IP Address."
+                echo "${bridge} doesn't seem to be a valid IP Address."
                 echo "Please enter a valid Hue bridge address."
-                unset BRIDGE
+                unset bridge
                 SKIP="y"
             fi
         done
         echo ""
         echo "We're going to try to communicate with the bridge."
         echo "Please press the central button on it and press enter to continue."
-        read -r CHOICE
+        read -r choice
         echo ""
 
-        hueCreateUser "${BRIDGE}" || \
+        hueCreateUser "${bridge}" || \
             ( echo "There was a problem communicating with the bridge." && \
               echo "The error was: ${RETURN}" && \
               kill $TOPPID )
         
-        BRIDGETOKEN=$(echo "${RETURN}"|cut -f6 -d\")
+        bridgetoken=$(echo "${RETURN}"|cut -f6 -d\")
 
         echo "Validating bridge communication..."
-        hueGetConfig "${BRIDGE}" "${BRIDGETOKEN}" || \
+        hueGetConfig "${bridge}" "${bridgetoken}" || \
             ( echo "Could not validate communication parameters." && \
               echo "The error was: ${RETURN}" && \
               kill $TOPPID )
 
         echo "All set! Writing configuration files"
-        echo "BRIDGE=${BRIDGE}"           >  "${APPDIR}"/config
-        echo "BRIDGETOKEN=${BRIDGETOKEN}" >> "${APPDIR}"/config
+        echo "BRIDGE=${bridge}"           >  "${APPDIR}"/config
+        echo "BRIDGETOKEN=${bridgetoken}" >> "${APPDIR}"/config
        
         echo ""
         echo "You may now start using hueshell to communicate with your brige."
@@ -105,6 +127,12 @@ doInit(){
         echo "$ hue list lights"
     fi
 }
+
+#doListDevices(){
+#    hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
+#
+#    echo "# of lights: ${#LIGHT_IDS[*]}"
+#}
 
 case "${1}" in
     "init") doInit;;
