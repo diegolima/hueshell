@@ -4,18 +4,22 @@
 # Global Variables:
 #   - LIGHT: Assocative array containing information about each light
 #   - LIGHT_IDS: Array containing the IDs of detected lights
-#   - RETURN: String containing inter-function data
 #   - APPDIR: Application's home directory
-#   - NMAP: NMAP binary location
+#   - BRIDGE: Bridge address read from the configuration file
+#   - BRIDGETOKEN: Bridge username read from the configuration file
 #   - JQ: JQ binary location
+#   - NMAP: NMAP binary location
+#   - RETURN: String containing inter-function data
 #   - TOPPID: PID of the parent shell process. Used to enable subshells to
 #             abort the script execution.
 ###############################################################################
 declare APPDIR
-declare TOPPID
-declare RETURN
-declare NMAP
+declare BRIDGE
+declare BRIDGETOKEN
 declare JQ
+declare NMAP
+declare RETURN
+declare TOPPID
 declare -A LIGHT
 declare -a LIGHT_IDS
 
