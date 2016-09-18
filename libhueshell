@@ -121,7 +121,6 @@ hueGetConfig(){
 ###############################################################################
 # Loads information about lights present in the Hue bridge
 # Globals:
-#   - RETURN
 #   - JQ
 #   - LIGHT: Composite array containing information about available lights
 #       * LIGHT[number][type]
@@ -142,7 +141,6 @@ hueLoadLights(){
     local endpoint
     local output
     local LIGHT_NUMBER
-    RETURN=""
     bridge="${1}"
     token="${2}"
 
