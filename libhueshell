@@ -1,5 +1,16 @@
 #!/bin/bash
 # This file is intended to be sourced, not executed!
+###############################################################################
+# Global Variables:
+#
+# These are declared by the lib and used to make data available accross the
+# script:
+#
+#   - LIGHT: Assocative array containing information about each light
+#   - LIGHT_IDS: Array containing the IDs of detected lights
+###############################################################################
+declare -A LIGHT
+declare -a LIGHT_IDS
 
 
 ###############################################################################

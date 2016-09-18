@@ -3,8 +3,6 @@
 
 ###############################################################################
 # Global Variables:
-#   - LIGHT: Assocative array containing information about each light
-#   - LIGHT_IDS: Array containing the IDs of detected lights
 #   - APPDIR: Application's home directory
 #   - BRIDGE: Bridge address read from the configuration file
 #   - BRIDGETOKEN: Bridge username read from the configuration file
@@ -21,8 +19,6 @@ declare JQ
 declare NMAP
 declare RETURN
 declare TOPPID
-declare -A LIGHT
-declare -a LIGHT_IDS
 
 APPDIR="${HOME}/.hueshell"
 NMAP=$(which nmap)
