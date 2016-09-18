@@ -121,17 +121,26 @@ hueGetConfig(){
 ###############################################################################
 # Loads information about lights present in the Hue bridge
 #
-# TODO: Explain each LIGHT array
-#
 # Globals:
 #   - JQ
 #   - LIGHT: Associative array containing information about available lights
-#       * LIGHT[number.id]
-#       * LIGHT[number.type]
-#       * LIGHT[number.name]
-#       * LIGHT[number.alert]
-#       * LIGHT[number.online]
-#       * LIGHT[number.reachable]
+#       * LIGHT[number.type] - A fixed name describing the type of light
+#       * LIGHT[number.name] - A unique, editable name given to the light.
+#       * LIGHT[number.modelid] - The hardware model of the light.
+#       * LIGHT[number.uniqueid] - Unique id of the device. 
+#       * LIGHT[number.swversion] - An identifier for the software version running on the light.
+#       * LIGHT[number.manufacturername] - The manufacturer name.
+#       * LIGHT[number.luminaireuniqueid] - Unique ID of the luminaire the light is a part of
+#       * LIGHT[number.state.on] - On/Off state of the light.
+#       * LIGHT[number.state.xy] - The x and y coordinates of a color in CIE color space.
+#       * LIGHT[number.state.ct] - The Mired Color temperature of the light.
+#       * LIGHT[number.state.bri] - Brightness of the light.
+#       * LIGHT[number.state.hue] - Hue of the light.
+#       * LIGHT[number.state.sat] - Saturation of the light.
+#       * LIGHT[number.state.alert] - The alert effect, which is a temporary change to the bulb’s state.
+#       * LIGHT[number.state-reachable] - Indicates if a light can be reached by the bridge.
+#       * LIGHT[number.state-colormode] - Indicates the color mode in which the light is working
+
 # Arguments:
 #   - Mandatory: Bridge Address (ip)
 #   - Mandatory: Bridg username (Access Token)
@@ -162,13 +171,26 @@ hueLoadLights(){
 
     LIGHT_NUMBER="${#LIGHT_IDS[*]}"
     for((i=0;i<LIGHT_NUMBER;i++)); do
-        eval LIGHT["${LIGHT_IDS[$i]}.id"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].uniqueid")
-        eval LIGHT["${LIGHT_IDS[$i]}.type"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].type")
-        eval LIGHT["${LIGHT_IDS[$i]}.name"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].name")
-        eval LIGHT["${LIGHT_IDS[$i]}.alert"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.alert")
-        eval LIGHT["${LIGHT_IDS[$i]}.online"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.on")
-        eval LIGHT["${LIGHT_IDS[$i]}.reachable"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.reachable")
-        eval LIGHT["${LIGHT_IDS[$i]}.brightness"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.brightness")
+        # Light Details
+        eval LIGHT["${LIGHT_IDS[$i]}.type"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].type")
+        eval LIGHT["${LIGHT_IDS[$i]}.name"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].name")
+        eval LIGHT["${LIGHT_IDS[$i]}.modelid"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].modelid")
+        eval LIGHT["${LIGHT_IDS[$i]}.uniqueid"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].uniqueid")
+        eval LIGHT["${LIGHT_IDS[$i]}.swversion"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].swversion")
+        eval LIGHT["${LIGHT_IDS[$i]}.manufacturername"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].manufacturername")
+        eval LIGHT["${LIGHT_IDS[$i]}.luminaireuniqueid"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].luminaireuniqueid")
+
+        # Light State
+        eval LIGHT["${LIGHT_IDS[$i]}.state.on"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.on")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.xy"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.xy")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.ct"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.ct")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.bri"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.bri")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.hue"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.hue")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.sat"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.sat")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.alert"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.alert")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.effect"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.effect")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.reachable"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.reachable")
+        eval LIGHT["${LIGHT_IDS[$i]}.state.colormode"]=$(echo "${output}"|${JQ} -c ".[\"${LIGHT_IDS[$i]}\"].state.colormode")
     done
 
     return 0
