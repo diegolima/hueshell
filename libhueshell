@@ -120,11 +120,18 @@ hueGetConfig(){
 
 ###############################################################################
 # Loads information about lights present in the Hue bridge
+#
+# TODO: Explain each LIGHT array
+#
 # Globals:
 #   - JQ
-#   - LIGHT: Composite array containing information about available lights
-#       * LIGHT[number][type]
-#       * LIGHT[number][name]
+#   - LIGHT: Associative array containing information about available lights
+#       * LIGHT[number.id]
+#       * LIGHT[number.type]
+#       * LIGHT[number.name]
+#       * LIGHT[number.alert]
+#       * LIGHT[number.online]
+#       * LIGHT[number.reachable]
 # Arguments:
 #   - Mandatory: Bridge Address (ip)
 #   - Mandatory: Bridg username (Access Token)

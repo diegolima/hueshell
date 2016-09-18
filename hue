@@ -128,11 +128,31 @@ doInit(){
     fi
 }
 
-#doListDevices(){
-#    hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
-#
-#    echo "# of lights: ${#LIGHT_IDS[*]}"
-#}
+doListDevices(){
+    local i
+    local devicetype
+
+    devicetype="${1}"
+
+    case "${devicetype}" in
+        "")
+            echo "You must specify a device type!"
+            echo "Valid types are:"
+            echo "  - lights"
+            ;;
+        "lights")
+            hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
+            echo "${#LIGHT_IDS[*]} lights have been detected."
+            for((i=0;i<${#LIGHT_IDS[*]};i++)); do
+                echo "  - Light ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})"
+            done
+            ;;
+        *)
+            echo "Unimplemented device type :("
+            ;;
+    esac
+
+}
 
 case "${1}" in
     "init") doInit;;
