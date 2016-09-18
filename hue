@@ -140,6 +140,7 @@ doLightAction(){
     action="${1}"
     target="${2}"
     state="${3}"
+    extra="${4}"
     nocolor="\e[0m"
 
     case "${action}" in
@@ -163,7 +164,10 @@ doLightAction(){
             done
             ;;
         set)
-            hueSetLights "${target}" "${state}"
+            hueSetLights "${BRIDGE}" "${BRIDGETOKEN}" "${target}" "${state}" "${extra}" || \
+                ( echo "There was an error setting the state." && \
+                  echo "The error was: ${RETURN}" && \
+                  kill $PPID )
             ;;
         *)
             echo "Unimplemented action :("
@@ -199,13 +203,13 @@ doGroupAction(){
 case "${1}" in
     "init") doInit;;
     light|lights)
-        doLightAction "${2}" "${3}" "${4}" 
+        doLightAction "${2}" "${3}" "${4}" "${5}"
         ;;
     group)
-        doGroupAction "${2}" "${3}" "${4}"
+        doGroupAction "${2}" "${3}" "${4}" "${5}"
         ;;
     room)
-        doRoomAction "${2}" "${3}" "${4}"
+        doRoomAction "${2}" "${3}" "${4}" "${5}"
         ;;
     *) showhelp;;
 esac
