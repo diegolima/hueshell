@@ -212,6 +212,40 @@ hueLoadLights(){
 
     return 0
 }
+hueSetLights(){
+    local bridge
+    local token
+    local endpoint
+    local output
+    local light
+    local lights
+    local state
+    local body
+    bridge="${1}"
+    token="${2}"
+    lights="${3}"
+    state="${4}"
+
+    if [[ ( -z "${bridge}" ) || ( -z "${token}" ) || ( -z "${light}" ) || ( -z "${state}" ) ]]; then return 1; fi
+    
+    for light in $lights; do
+        endpoint="http://${bridge}/api/${token}/lights/${light}/state"
+
+        # Begin post body
+        body='{'
+        if [ "${state}" =~ 'on' ]; then 
+            body="${body}\"on\": \"true\","
+        elif [ "${state}" =~ 'off' ]; then
+            body="${body}\"on\": \"false\","
+        fi
+        body="${body}}"
+        # End post body
+
+        output=$(curl -s --data "${body}" "${endpoint}")
+        echo $output
+
+    done
+}
 
 ###############################################################################
 # Loads information about lights present in the Hue bridge

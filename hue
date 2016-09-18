@@ -164,6 +164,7 @@ doLightAction(){
             ;;
         set)
             hueSetLights "${target}" "${state}"
+            ;;
         *)
             echo "Unimplemented action :("
             ;;
