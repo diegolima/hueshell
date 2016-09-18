@@ -5,21 +5,26 @@
 ###############################################################################
 # TODO: Write proper documentation
 ###############################################################################
-valid_ip() {
-    local  IP=$1
-    local  STAT=1
-    if [ -z "${IP}" ]; then return 1; fi
+validIp() {
+    local oifs
+    local ip
+    local stat
 
-    if [[ "$IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    ip="${1}"
+    stat=1
+
+    if [ -z "${ip}" ]; then return 1; fi
+
+    if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
         OIFS=$IFS
         IFS='.'
-        IP=($IP)
+        ip=($ip)
         IFS=$OIFS
-        [[ ${IP[0]} -le 255 && ${IP[1]} -le 255 \
-            && ${IP[2]} -le 255 && ${IP[3]} -le 255 ]]
-        STAT=$?
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
     fi
-    return $STAT
+    return $stat
 }
 
 ###############################################################################
@@ -27,7 +32,7 @@ valid_ip() {
 # Globals:
 #   - RETURN
 # Arguments:
-#   - Mandatory: Bridge Address (IP)
+#   - Mandatory: Bridge Address (ip)
 #   - Optional: Application Name
 # Returns:
 #   - Success: JSON containing a username (access token):
@@ -42,33 +47,33 @@ valid_ip() {
 #   - 3: error - unexpected reply
 ###############################################################################
 hueCreateUser(){
-    local BRIDGE
-    local APPNAME
-    local ENDPOINT
-    local OUTPUT
+    local bridge
+    local appname
+    local endpoint
+    local output
     RETURN=""
-    BRIDGE="${1}"
+    bridge="${1}"
 
     if [ -z "${1}" ]; then return 1; fi
 
     if [ ! -z "${2}" ]; then
-        APPNAME="${2}"
+        appname="${2}"
     else
-        APPNAME="hueshell"
+        appname="hueshell"
     fi
 
-    ENDPOINT="http://${BRIDGE}/api"
+    endpoint="http://${bridge}/api"
 
-    OUTPUT=$(curl -s --data "{\"devicetype\": \"${APPNAME}#hueshell\"}" "${ENDPOINT}")
-    if [[ "${OUTPUT}" =~ "error" ]]; then
-        export RETURN="${OUTPUT}"
+    output=$(curl -s --data "{\"devicetype\": \"${appname}#hueshell\"}" "${endpoint}")
+    if [[ "${output}" =~ "error" ]]; then
+        export RETURN="${output}"
         return 2
-    elif [[ "${OUTPUT}" =~ "success" ]]; then
-        export RETURN="${OUTPUT}"
+    elif [[ "${output}" =~ "success" ]]; then
+        export RETURN="${output}"
         return 0
     else
         echo "hueCreateUser() - Something unexpected happened!"
-        echo "Output: ${OUTPUT}"
+        echo "Output: ${output}"
         return 3
     fi
 }
@@ -78,7 +83,7 @@ hueCreateUser(){
 # Globals:
 #   - RETURN
 # Arguments:
-#   - Mandatory: Bridge Address (IP)
+#   - Mandatory: Bridge Address (ip)
 #   - Mandatory: Bridg username (Access Token)
 # Returns:
 #   - Success: JSON containing the current bridge configuration
@@ -92,46 +97,73 @@ hueCreateUser(){
 #   - 3: error - unexpected reply
 ###############################################################################
 hueGetConfig(){
-    local BRIDGE
-    local TOKEN
-    local ENDPOINT
-    local OUTPUT
+    local bridge
+    local token
+    local endpoint
+    local output
     RETURN=""
-    BRIDGE="${1}"
-    TOKEN="${2}"
+    bridge="${1}"
+    token="${2}"
 
-    if [[ ( -z "${BRIDGE}" ) || ( -z "${TOKEN}" ) ]]; then return 1; fi
+    if [[ ( -z "${bridge}" ) || ( -z "${token}" ) ]]; then return 1; fi
 
-    ENDPOINT="http://${BRIDGE}/api/${TOKEN}/config"
-    OUTPUT=$(curl -s "${ENDPOINT}")
-    if [[ "${OUTPUT}" =~ "zigbeechannel" ]]; then
-        export RETURN="${OUTPUT}"
+    endpoint="http://${bridge}/api/${token}/config"
+    output=$(curl -s "${endpoint}")
+    if [[ "${output}" =~ "zigbeechannel" ]]; then
+        export RETURN="${output}"
         return 0
     else 
-        export RETURN="${OUTPUT}"
+        export RETURN="${output}"
         return 2
     fi
 }
 
 
 ###############################################################################
-# Retrieves the Hue bridge configuration parameters
+# Loads information about lights present in the Hue bridge
 # Globals:
 #   - RETURN
+#   - JQ
+#   - LIGHT: Composite array containing information about available lights
+#       * LIGHT[number][type]
+#       * LIGHT[number][name]
 # Arguments:
-#   - Mandatory: Bridge Address (IP)
+#   - Mandatory: Bridge Address (ip)
 #   - Mandatory: Bridg username (Access Token)
 # Returns:
-#   - Success: JSON containing the current bridge configuration
-#
-#   - Error:   JSON containing error message
-#              [{"error":{"type":101,"address":"","description":"link button not pressed"}}]
 # Exit Codes:
 #   - 0: success
 #   - 1: error - mandatory argument not provided
 #   - 2: error - bridge communication problem
 #   - 3: error - unexpected reply
 ###############################################################################
-hueListLights(){
+hueLoadLights(){
+    local bridge
+    local token
+    local endpoint
+    local output
+    local LIGHT_NUMBER
+    RETURN=""
+    bridge="${1}"
+    token="${2}"
+
+    if [[ ( -z "${bridge}" ) || ( -z "${token}" ) ]]; then return 1; fi
+    
+    endpoint="http://${bridge}/api/${token}/lights"
+
+    output=$(curl -s "${endpoint}") || \
+        return 2
+    LIGHT_IDS=($(echo "${output}"|${JQ} keys|cut -f2 -d\"|egrep -v '\[|\]'))
+
+    LIGHT_NUMBER="${#LIGHT_IDS[*]}"
+    for((i=0;i<LIGHT_NUMBER;i++)); do
+        eval LIGHT["${LIGHT_IDS[$i]}.id"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].uniqueid")
+        eval LIGHT["${LIGHT_IDS[$i]}.type"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].type")
+        eval LIGHT["${LIGHT_IDS[$i]}.name"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].name")
+        eval LIGHT["${LIGHT_IDS[$i]}.alert"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.alert")
+        eval LIGHT["${LIGHT_IDS[$i]}.online"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.on")
+        eval LIGHT["${LIGHT_IDS[$i]}.reachable"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.reachable")
+        eval LIGHT["${LIGHT_IDS[$i]}.brightness"]=$(echo "${output}"|$JQ ".[\"${LIGHT_IDS[$i]}\"].state.brightness")
+    done
 
 }
