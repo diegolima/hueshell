@@ -12,6 +12,9 @@
 declare -A LIGHT
 declare -a LIGHT_IDS
 
+export LIGHT
+export LIGHT_IDS
+
 
 ###############################################################################
 # TODO: Write proper documentation
