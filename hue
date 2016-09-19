@@ -121,6 +121,11 @@ doInit(){
         echo "All set! Writing configuration files"
         echo "BRIDGE=${bridge}"           >  "${APPDIR}"/config
         echo "BRIDGETOKEN=${bridgetoken}" >> "${APPDIR}"/config
+        if [ ! -z "${JQ}" ]; then
+            echo "JQ=${JQ}"               >> "${APPDIR}"/config
+        elif [ -x "${APPDIR}"/jq ]; then
+            echo "JQ=${APPDIR}/jq"        >> "${APPDIR}"/config
+        fi
        
         echo ""
         echo "You may now start using hueshell to communicate with your brige."
