@@ -1,0 +1,119 @@
+#!/bin/bash
+###############################################################################
+# Apartment Lights
+# 
+# This is a sample application using libhueshell.
+#
+# It depicts an apartment where some Hue lamps are present.
+#
+# We use the Hue state from libhueshell to determine which lamps
+# are turned on and if they are colored Hue devices they'll also
+# be drawn using their approximate color (from state.hue)
+#
+# Please be aware that the hueshell configuration file must be present
+# (hue init must be run before running ap-l)
+###############################################################################
+
+
+. ~/.hueshell/config
+. ../libhueshell
+hueLoadLights "${BRIDGE}" "${BRIDGETOKEN}"
+
+###############################################################################
+# Hue cheat table
+#
+#
+# 0 - 10000     = red
+# 10000 - 20000 = yellow
+# 20000 - 35000 = green
+# 35000 - 50000 = blue
+# 50000 - 60000 = purple
+# 60000 - 65535 = red
+###############################################################################
+
+nocolor="\e[0m"
+for((i=0;i<${#LIGHT_IDS[*]};i++)); do
+    if [ "${LIGHT[${LIGHT_IDS[$i]}.state.reachable]}" == "false" ]; then
+        color="\e[41m" # Red
+    elif [ "${LIGHT[${LIGHT_IDS[$i]}.state.on]}" == "true" ]; then
+        if [ "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" != "null" ]; then
+            if [ "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 10000 ]; then
+                color="\e[91m"
+            elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 10000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 20000 ) ]]; then
+                color="\e[93m"
+            elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 20000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 35000 ) ]]; then
+                color="\e[92m"
+            elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 35000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 50000 ) ]]; then
+                color="\e[94m"
+            elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 50000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 60000 ) ]]; then
+                color="\e[95m"
+            elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 60000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 65536 ) ]]; then
+                color="\e[91m"
+            fi
+        else
+            color="\e[93m" # Light Yellow
+        fi
+    elif [ "${LIGHT[${LIGHT_IDS[$i]}.state.on]}" == "false" ]; then
+        color="\e[90m" # Dark Grey
+    fi
+
+    if [ "${i}" == 2 ]; then
+        eval "L0${i}=\"${color}o${nocolor}\""
+    elif [ "${i}" == 6 ]; then
+        eval "L0${i}=\"${color}oo${nocolor}    \""
+    elif [ "${i}" == 7 ]; then
+        eval "L0${i}=\"${color} O${nocolor}    \""
+    elif [ "${i}" == 10 ]; then
+        eval "L${i}=\"${color}     o${nocolor}\""
+    elif [ "${i}" -lt 10 ]; then
+        eval "L0${i}=\"${color}O${nocolor}     \""
+    else
+        eval "L${i}=\"${color}O${nocolor}     \""
+    fi
+done
+
+clear
+echo -e ""
+echo -e "                            +-------###############------------------------------+"
+echo -e "                            |                             |                      |"
+echo -e "                            |                            ${L02}|                      |"
+echo -e "                            |                            ${L02}|                      |"
+echo -e "                            |                            ${L02}|                      |"
+echo -e "                            |            ${L14}          ${L02}|                      |"
+echo -e "                            |            ${L00}          ${L02}|                      #"
+echo -e "                            |                            ${L02}|          @           #"
+echo -e "                            |                            ${L02}|          @           #"
+echo -e "                            |                            ${L02}|                      #"
+echo -e "                            |                            ${L02}|                      #"
+echo -e "                            |                             |                      #"
+echo -e "  -----########-------------+-------. .--+---. .----------+                      |"
+echo -e "  |                |                     |         |                             |"
+echo -e "  |                |                     |         .                             |"
+echo -e "  |                |          @          |         .                             |"
+echo -e "  |      @         |                     |   ${L07}|                             |"
+echo -e "  |                |                     |         +-----------------------------|"
+echo -e "  |                |                @ @  |           ${L06}                ${L10}|"
+echo -e "  |                |---------------------|                                       |"
+echo -e "  |                |                @ @  |                                       #"
+echo -e "  |                |                     |                                       #"
+echo -e "  |                |                     |           ${L11} ${L08}  ${L12} ${L01}#"
+echo -e "  |                |          @          .                                       #"
+echo -e "  |      ${L13}    |                     .                                       #"
+echo -e "  |                |                     |                                       #"
+echo -e "  |                +---------------------+                                       |"
+echo -e "  |                ::                                                            |"
+echo -e "  |                ::                                                            |"
+echo -e "  |                ::                                              +-------------+---+"
+echo -e "  |      ${L04}    ::                                              |                 /"
+echo -e "  |                ::                                              |                 /"
+echo -e "  |                ::         @                                    .                 /"
+echo -e "  |                ::        @ @                                   .                 /"
+echo -e "  |                ::                                              .                 /"
+echo -e "  |                ::                                              .        @        /"
+echo -e "  |      ${L05}    ::                                     ${L03}   .                 /"
+echo -e "  |                ::                                     ${L09}   .                 /"
+echo -e "  |                                                                .                 /"
+echo -e "  |                                                                |                 /"
+echo -e "  |                                                                |                 /"
+echo -e "  +---. .----------------------------------------------------------+-----------------+"
+echo ""
