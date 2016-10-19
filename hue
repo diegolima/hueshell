@@ -159,13 +159,29 @@ doLightAction(){
             echo "${#LIGHT_IDS[*]} lights have been detected."
             for((i=0;i<${#LIGHT_IDS[*]};i++)); do
                 if [ "${LIGHT[${LIGHT_IDS[$i]}.state.reachable]}" == "false" ]; then
-                    color="\e[90m" # Dark Grey
+                    color="\e[41m" # Dark Red
                 elif [ "${LIGHT[${LIGHT_IDS[$i]}.state.on]}" == "true" ]; then
-                    color="\e[32m" # Green
+                    if [ "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" != "null" ]; then
+                        if [ "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 10000 ]; then
+                            color="\e[91m" # Light Red
+                        elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 10000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 20000 ) ]]; then
+                            color="\e[93m" # Light Yellow
+                        elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 20000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 35000 ) ]]; then
+                            color="\e[92m" # Light Green
+                        elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 35000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 50000 ) ]]; then
+                            color="\e[94m" # Light Blue
+                        elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 50000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 60000 ) ]]; then
+                            color="\e[95m" # Light Magenta
+                        elif [[ ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -ge 60000 ) && ( "${LIGHT[${LIGHT_IDS[$i]}.state.hue]}" -lt 65536 ) ]]; then
+                            color="\e[91m" # Light Red
+                        fi
+                    else
+                        color="\e[93m" # Light Yellow
+                    fi
                 elif [ "${LIGHT[${LIGHT_IDS[$i]}.state.on]}" == "false" ]; then
-                    color="\e[31m" # Red
+                    color="\e[90m" # Dark Grey 
                 fi
-                echo -e "${color}  - Light ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})${nocolor}"
+                echo -e "${color} \xE2\x98\x80 ${LIGHT_IDS[$i]}: ${LIGHT[${LIGHT_IDS[$i]}.name]} (${LIGHT[${LIGHT_IDS[$i]}.type]})${nocolor}"
             done
             ;;
         set)
