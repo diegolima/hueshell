@@ -1,0 +1,59 @@
+#!/bin/bash
+# shellcheck disable=1090
+# shellcheck disable=1091
+###############################################################################
+# Light Temperature
+# 
+# This is a sample application using libhueshell.
+#
+# It checks the current location temperature using Yahoo's weather API and sets
+# the lights to reflect temperature changes.
+#
+# PARAMETERS:
+#   LIGHT - Which light should be set using this tool. At the moment only one
+#           light at a time is supported.
+#
+#   STATION - Which weather station will be used to provide the current
+#             temperature. Weather stations MUST be valid ICAO stations.
+#             Also see: http://weather.rap.ucar.edu/surface/stations.txt
+#
+# Please be aware that the hueshell configuration file must be present
+# (hue init must be run before running ap-l)
+###############################################################################
+STATION="${2}"
+LIGHT="${1}"
+RETURN=""
+
+. ~/.hueshell/config
+. "$(dirname $0)"/../libhueshell
+
+tempToHue(){
+    local lights="${1}"
+    local temperature="${2}"
+    local tmp_min="0"
+    local tmp_max="44"
+    local hue_min="44000"
+    local hue_set="22000"
+    local multiplier="1000"
+    echo ${temperature}
+
+    if [ ${temperature} -lt $tmp_min ]; then
+        temperature=${tmp_min}
+    elif [ "${temperature}" -gt $tmp_max ]; then
+        temperature=${tmp_max}
+    fi
+
+    hue_set=$((${hue_min}-${temperature}*${multiplier}))
+    hueSetLights "${BRIDGE}" "${BRIDGETOKEN}" "${lights}" "hue=${hue_set}"
+}
+getTemperatureFromPlace(){
+    local station="${1}"
+    local wapi_endpoint="https://aviationweather.gov/adds/dataserver_current/httpparam?"
+    local wapi_query="dataSource=metars&requestType=retrieve&format=csv&stationString=${station}&hoursBeforeNow=1&fields=temp_c"
+    echo curl -s ${wapi_endpoint}${wapi_query}
+    local temperature=$(curl -s "${wapi_endpoint}${wapi_query}" | tail -1|cut -f6 -d,|cut -f1 -d.)
+    echo ${temperature}
+    RETURN="${temperature}"
+}
+getTemperatureFromPlace "${STATION}"
+tempToHue "${LIGHT}" "${RETURN}"
