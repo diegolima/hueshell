@@ -27,6 +27,14 @@ RETURN=""
 . ~/.hueshell/config
 . "$(dirname $0)"/../libhueshell
 
+if [ -z "${LIGHT}" ]; then
+    echo "No lights to change. Exiting."
+    exit 1
+fi
+if [ -z "${STATION}" ]; then
+    STATION="SBSP"
+fi
+
 tempToHue(){
     local lights="${1}"
     local temperature="${2}"
@@ -35,7 +43,6 @@ tempToHue(){
     local hue_min="44000"
     local hue_set="22000"
     local multiplier="1000"
-    echo ${temperature}
 
     if [ ${temperature} -lt $tmp_min ]; then
         temperature=${tmp_min}
@@ -50,9 +57,7 @@ getTemperatureFromPlace(){
     local station="${1}"
     local wapi_endpoint="https://aviationweather.gov/adds/dataserver_current/httpparam?"
     local wapi_query="dataSource=metars&requestType=retrieve&format=csv&stationString=${station}&hoursBeforeNow=1&fields=temp_c"
-    echo curl -s ${wapi_endpoint}${wapi_query}
     local temperature=$(curl -s "${wapi_endpoint}${wapi_query}" | tail -1|cut -f6 -d,|cut -f1 -d.)
-    echo ${temperature}
     RETURN="${temperature}"
 }
 getTemperatureFromPlace "${STATION}"
